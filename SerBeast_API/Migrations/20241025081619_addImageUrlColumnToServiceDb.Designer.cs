@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SerBeast_API.Data;
 
@@ -11,9 +12,11 @@ using SerBeast_API.Data;
 namespace SerBeast_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241025081619_addImageUrlColumnToServiceDb")]
+    partial class addImageUrlColumnToServiceDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -176,9 +179,15 @@ namespace SerBeast_API.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProfessionalId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
                 });
@@ -190,6 +199,9 @@ namespace SerBeast_API.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Barangay")
                         .HasColumnType("nvarchar(max)");
@@ -204,8 +216,10 @@ namespace SerBeast_API.Migrations
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("nvarchar(21)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -254,9 +268,6 @@ namespace SerBeast_API.Migrations
                     b.Property<string>("ProfileImageUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("Rating")
-                        .HasColumnType("decimal(4, 2)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -281,6 +292,10 @@ namespace SerBeast_API.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasDiscriminator().HasValue("ApplicationUser");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("SerBeast_API.Model.Booking", b =>
@@ -294,6 +309,9 @@ namespace SerBeast_API.Migrations
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ProfessionalId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int?>("ProfessionalServiceId")
                         .HasColumnType("int");
 
@@ -306,6 +324,8 @@ namespace SerBeast_API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProfessionalId");
 
                     b.HasIndex("ProfessionalServiceId");
 
@@ -638,6 +658,29 @@ namespace SerBeast_API.Migrations
                     b.ToTable("ServiceLocations");
                 });
 
+            modelBuilder.Entity("SerBeast_API.Model.Admin", b =>
+                {
+                    b.HasBaseType("SerBeast_API.Model.ApplicationUser");
+
+                    b.Property<DateTime>("LastLogin")
+                        .HasColumnType("datetime2");
+
+                    b.HasDiscriminator().HasValue("Admin");
+                });
+
+            modelBuilder.Entity("SerBeast_API.Model.Professional", b =>
+                {
+                    b.HasBaseType("SerBeast_API.Model.ApplicationUser");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Rating")
+                        .HasColumnType("decimal(4, 2)");
+
+                    b.HasDiscriminator().HasValue("Professional");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -691,17 +734,29 @@ namespace SerBeast_API.Migrations
 
             modelBuilder.Entity("Review", b =>
                 {
-                    b.HasOne("SerBeast_API.Model.ApplicationUser", "Professional")
+                    b.HasOne("SerBeast_API.Model.Professional", "Professional")
                         .WithMany()
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SerBeast_API.Model.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Professional");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SerBeast_API.Model.Booking", b =>
                 {
+                    b.HasOne("SerBeast_API.Model.Professional", "Professional")
+                        .WithMany()
+                        .HasForeignKey("ProfessionalId");
+
                     b.HasOne("SerBeast_API.Model.ProfessionalService", "ProfessionalService")
                         .WithMany()
                         .HasForeignKey("ProfessionalServiceId");
@@ -712,6 +767,8 @@ namespace SerBeast_API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Professional");
+
                     b.Navigation("ProfessionalService");
 
                     b.Navigation("User");
@@ -719,7 +776,7 @@ namespace SerBeast_API.Migrations
 
             modelBuilder.Entity("SerBeast_API.Model.ProfessionalService", b =>
                 {
-                    b.HasOne("SerBeast_API.Model.ApplicationUser", "Professional")
+                    b.HasOne("SerBeast_API.Model.Professional", "Professional")
                         .WithMany("ProfessionalServices")
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -749,20 +806,13 @@ namespace SerBeast_API.Migrations
 
             modelBuilder.Entity("SerBeast_API.Model.ServiceLocation", b =>
                 {
-                    b.HasOne("SerBeast_API.Model.ApplicationUser", "Professional")
+                    b.HasOne("SerBeast_API.Model.Professional", "Professional")
                         .WithMany("ServiceLocations")
                         .HasForeignKey("ProfessionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Professional");
-                });
-
-            modelBuilder.Entity("SerBeast_API.Model.ApplicationUser", b =>
-                {
-                    b.Navigation("ProfessionalServices");
-
-                    b.Navigation("ServiceLocations");
                 });
 
             modelBuilder.Entity("SerBeast_API.Model.Category", b =>
@@ -773,6 +823,13 @@ namespace SerBeast_API.Migrations
             modelBuilder.Entity("SerBeast_API.Model.Service", b =>
                 {
                     b.Navigation("ProfessionalServices");
+                });
+
+            modelBuilder.Entity("SerBeast_API.Model.Professional", b =>
+                {
+                    b.Navigation("ProfessionalServices");
+
+                    b.Navigation("ServiceLocations");
                 });
 #pragma warning restore 612, 618
         }

@@ -15,6 +15,6 @@ namespace SerBeast_API.Model
         public string ProfessionalId { get; set; }
 
         [ForeignKey("ProfessionalId")]
-        public Professional Professional { get; set; }
+        public ApplicationUser Professional { get; set; }
     }
 }

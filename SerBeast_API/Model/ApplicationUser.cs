@@ -13,8 +13,6 @@ namespace SerBeast_API.Model
         [Required]
         public string LastName { get; set; }
 
-        public string? Address { get; set; }
-
         public string? ProfileImageUrl { get; set; }
 
         public string? HouseLotBlockNumber { get; set; } 
@@ -26,6 +24,14 @@ namespace SerBeast_API.Model
         public DateTime DateCreated { get; set; } = DateTime.Now;
 
         public DateTime? Birthday { get; set; }
+
+        public string? Description { get; set; }
+
+        public decimal? Rating { get; set; } = 0;
+
+        public ICollection<ProfessionalService> ProfessionalServices { get; set; } = new List<ProfessionalService>();
+
+        public ICollection<ServiceLocation> ServiceLocations { get; set; } = new List<ServiceLocation>();
     }
 
 }

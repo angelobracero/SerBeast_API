@@ -10,13 +10,7 @@ public class Review
     public string ProfessionalId { get; set; } 
 
     [ForeignKey("ProfessionalId")]
-    public Professional Professional { get; set; }
-
-    [Required]
-    public string UserId { get; set; } 
-
-    [ForeignKey("UserId")]
-    public ApplicationUser User { get; set; } 
+    public ApplicationUser Professional { get; set; }
 
     [Range(1, 5)]
     public int Rating { get; set; } 

@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SerBeast_API.Model
 {
@@ -14,18 +14,14 @@ namespace SerBeast_API.Model
         [Required]
         public string Description { get; set; }
 
+        [Required]
+        public int CategoryId { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public virtual Category Category { get; set; }
+
         public string? ImageUrl { get; set; }
 
-        public decimal? Price { get; set; }
-
-        public string? Category { get; set; }
-
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-
-        [Required]
-        public string ProfessionalId { get; set; }
-
-        [ForeignKey("ProfessionalId")]
-        public virtual Professional Professional { get; set; }
+        public ICollection<ProfessionalService> ProfessionalServices { get; set; } = new List<ProfessionalService>(); 
     }
 }
