@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Bogus;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -57,6 +58,8 @@ namespace SerBeast_API.Controllers
                 LastName = model.LastName,
                 PhoneNumber = model.PhoneNumber,
                 Description = model.Description,
+                HouseLotBlockNumber = model.HouseLotBlockNumber,
+                Street = model.Street,
                 Barangay = model.Barangay
             };
 
@@ -153,6 +156,51 @@ namespace SerBeast_API.Controllers
             _response.StatusCode = HttpStatusCode.OK;
             _response.IsSuccess = true;
             _response.Result = loginResponse;
+            return Ok(_response);
+        }
+
+       
+
+        [HttpPost("register/fakecustomer")]
+        public async Task<IActionResult> RegisterFakeCustomer()
+        {
+            var fakeCustomer = FakeDataGenerator.GenerateFakeCustomer();
+            return await RegisterUser(fakeCustomer, UserRoles.Role_Customer);
+        }
+
+        [HttpPost("register/fakecustomers/{count}")]
+        public async Task<IActionResult> RegisterFakeCustomers(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var fakeCustomer = FakeDataGenerator.GenerateFakeCustomer();
+                await RegisterUser(fakeCustomer, UserRoles.Role_Customer);
+            }
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.Result = $"{count} fake customers created successfully.";
+            return Ok(_response);
+        }
+
+
+        [HttpPost("register/fakeprofessional")]
+        public async Task<IActionResult> RegisterFakeProfessional()
+        {
+            var fakeProfessional = FakeDataGenerator.GenerateFakeCustomer();
+            return await RegisterUser(fakeProfessional, UserRoles.Role_Professional);
+        }
+
+        [HttpPost("register/fakeprofessional/{count}")]
+        public async Task<IActionResult> RegisterFakeProfessional(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var fakeProfessional = FakeDataGenerator.GenerateFakeCustomer();
+                await RegisterUser(fakeProfessional, UserRoles.Role_Professional);
+            }
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.Result = $"{count} fake professional created successfully.";
             return Ok(_response);
         }
 

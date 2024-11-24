@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SerBeast_API.Data;
 
@@ -11,9 +12,11 @@ using SerBeast_API.Data;
 namespace SerBeast_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241027111024_something")]
+    partial class something
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,7 +258,7 @@ namespace SerBeast_API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Rating")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(4, 2)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -379,16 +382,6 @@ namespace SerBeast_API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProfessionalServiceId"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Image")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10, 2)");
 
@@ -400,8 +393,6 @@ namespace SerBeast_API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ProfessionalServiceId");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("ProfessionalId");
 
@@ -719,7 +710,8 @@ namespace SerBeast_API.Migrations
                 {
                     b.HasOne("SerBeast_API.Model.ProfessionalService", "ProfessionalService")
                         .WithMany()
-                        .HasForeignKey("ProfessionalServiceId");
+                        .HasForeignKey("ProfessionalServiceId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("SerBeast_API.Model.ApplicationUser", "User")
                         .WithMany()
@@ -734,12 +726,6 @@ namespace SerBeast_API.Migrations
 
             modelBuilder.Entity("SerBeast_API.Model.ProfessionalService", b =>
                 {
-                    b.HasOne("SerBeast_API.Model.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("SerBeast_API.Model.ApplicationUser", "Professional")
                         .WithMany("ProfessionalServices")
                         .HasForeignKey("ProfessionalId")
@@ -752,8 +738,6 @@ namespace SerBeast_API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
-
                     b.Navigation("Professional");
 
                     b.Navigation("Service");
@@ -764,7 +748,7 @@ namespace SerBeast_API.Migrations
                     b.HasOne("SerBeast_API.Model.Category", "Category")
                         .WithMany("Services")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");

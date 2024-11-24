@@ -10,13 +10,22 @@ namespace SerBeast_API.Model
 
         public int ServiceId { get; set; }
 
-        [ForeignKey("ServiceId")]
-        public Service Service { get; set; }
-
-        public decimal Price { get; set; } 
+        public int CategoryId { get; set; }
 
         [Required]
         public string ProfessionalId { get; set; }
+
+        public decimal Price { get; set; } 
+
+        public string Description { get; set; }
+
+        public string? Image { get; set; }
+
+        [ForeignKey("ServiceId")]
+        public Service Service { get; set; }
+
+        [ForeignKey("CategoryId")]
+        public Category Category { get; set; }
 
         [ForeignKey("ProfessionalId")]
         public virtual ApplicationUser Professional { get; set; }

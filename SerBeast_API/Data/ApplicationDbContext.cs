@@ -256,21 +256,36 @@ namespace SerBeast_API.Data
 
 
 
+            modelBuilder.Entity<ProfessionalService>(entity =>
+            {
+                entity.Property(s => s.Price)
+                    .HasColumnType("decimal(10, 2)");
 
-            modelBuilder.Entity<ApplicationUser>()
-                .Property(p => p.Rating)
-                .HasColumnType("decimal(4, 2)");
+                entity.HasOne(ps => ps.Professional)
+                    .WithMany(u => u.ProfessionalServices)
+                    .HasForeignKey(ps => ps.ProfessionalId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ProfessionalService>()
-                .Property(s => s.Price)
-                .HasColumnType("decimal(10, 2)"); 
+                entity.HasOne(ps => ps.Service)
+                    .WithMany(s => s.ProfessionalServices)
+                    .HasForeignKey(ps => ps.ServiceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ps => ps.Category)
+                    .WithMany()
+                    .HasForeignKey(ps => ps.CategoryId)
+                    .OnDelete(DeleteBehavior.NoAction); // Prevent cascade delete
+            });
+
+            modelBuilder.Entity<Service>()
+                .HasOne(s => s.Category)
+                .WithMany(c => c.Services)
+                .HasForeignKey(s => s.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Booking>()
                 .Property(b => b.Status)
-                .HasConversion(
-                    v => v.ToFriendlyString(),
-                    v => (BookingStatus)Enum.Parse(typeof(BookingStatus), v));
-
+                .HasConversion<string>();
         }
     }
 }

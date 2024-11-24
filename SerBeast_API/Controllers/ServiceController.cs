@@ -20,13 +20,40 @@ namespace SerBeast_API.Controllers
             _response = new ApiResponse();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetServices()
+        [HttpGet(Name = "GetAllServices")]
+        public async Task<IActionResult> GetAllServices()
         {
-            _response.Result = await _db.Services.ToListAsync();
+            var services = await _db.Services
+                .Select(s => new ServiceGetDTO
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    ProfessionalServices = s.ProfessionalServices
+                        .Select(ps => new ServiceProfessionalServiceDTO
+                        {
+                            ProfessionalServiceId = ps.ProfessionalServiceId,
+                            Price = ps.Price,
+                            ProfessionalId = ps.ProfessionalId,
+                            ProfessionalName = $"{ps.Professional.FirstName} {ps.Professional.LastName}",
+                            Barangay = ps.Professional.Barangay,
+                            Description = ps.Professional.Description,
+                            Rating = (decimal)ps.Professional.Rating
+                        }).ToList()
+                })
+                .ToListAsync();
+
+            if (services is null || !services.Any())
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                return NotFound(_response);
+            }
+
+            _response.Result = services;
             _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
+
 
         [HttpGet("{id:int}", Name = "GetService")]
         public async Task<IActionResult> GetService(int id)
@@ -38,7 +65,26 @@ namespace SerBeast_API.Controllers
                 return BadRequest(_response);
             }
 
-            var service = await _db.Services.FindAsync(id);
+            var service = await _db.Services
+                .Where(s => s.Id == id)
+                .Select(s => new ServiceGetDTO
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    ProfessionalServices = s.ProfessionalServices
+                        .Select(ps => new ServiceProfessionalServiceDTO
+                        {
+                            ProfessionalServiceId = ps.ProfessionalServiceId,
+                            Price = ps.Price,
+                            ProfessionalId = ps.ProfessionalId,
+                            ProfessionalName = $"{ps.Professional.FirstName} {ps.Professional.LastName}",
+                            Barangay = ps.Professional.Barangay,
+                            Description = ps.Professional.Description,
+                            Rating = (decimal)ps.Professional.Rating,
+                            PhoneNumber = ps.Professional.PhoneNumber
+                        }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (service is null)
             {
@@ -51,6 +97,8 @@ namespace SerBeast_API.Controllers
             _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
+
+
 
         [HttpPost]
         public async Task<ActionResult<ApiResponse>> CreateService([FromForm] ServiceCreateDTO serviceCreateDTO)

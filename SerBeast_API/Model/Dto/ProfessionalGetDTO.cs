@@ -2,18 +2,17 @@
 
 namespace SerBeast_API.Model.Dto
 {
-    public class ProfessionalsGetDTO
+    public class ProfessionalGetDTO
     {
-        [Required]
-        public string Id { get; set; }
-
-        [Required]
         public string FirstName { get; set; }
-                
+
         public string? MiddleInitial { get; set; }
 
-        [Required]
         public string LastName { get; set; }
+
+        public string? HouseLotBlockNumber { get; set; }
+
+        public string? Street { get; set; }
 
         public string? Barangay { get; set; }
 
@@ -23,6 +22,6 @@ namespace SerBeast_API.Model.Dto
 
         public string? PhoneNumber { get; set; }
 
-        public List<ProfessionalServiceGetDTO> ProfessionalServices { get; internal set; }
+        public ICollection<ProfessionalServiceGetDTO> ProfessionalServices { get; set; } = new List<ProfessionalServiceGetDTO>();
     }
 }

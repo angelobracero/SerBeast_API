@@ -23,7 +23,14 @@ namespace SerBeast_API.Model.Dto
         [MinLength(6)]
         public string Password { get; set; }
 
-        public string? Barangay { get; set; }
+        [Required]
+        public string HouseLotBlockNumber { get; set; }
+
+        [Required]
+        public string Street { get; set; }
+
+        [Required]
+        public string Barangay { get; set; }
 
         //[Required]
         //[Compare("Password", ErrorMessage = "Passwords do not match.")]

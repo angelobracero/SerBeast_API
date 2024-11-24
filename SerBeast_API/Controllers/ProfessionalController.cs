@@ -38,6 +38,24 @@ namespace SerBeast_API.Controllers
                     var roles = await _userManager.GetRolesAsync(pro);
                     if (roles.Contains(UserRoles.Role_Professional))
                     {
+                        // Fetch the professional services for the current professional
+                        var professionalServices = await _db.ProfessionalServices
+                                                             .Where(ps => ps.ProfessionalId == pro.Id)
+                                                             .Include(ps => ps.Service) // Include related Service details
+                                                             .ToListAsync();
+
+                        // Map the professional's services to the DTO
+                        var professionalServicesDTO = professionalServices.Select(ps => new ProfessionalServiceGetDTO
+                        {
+                            ProfessionalServiceId = ps.ProfessionalServiceId,
+                            ServiceId = ps.ServiceId,
+                            Price = ps.Price,
+                            Description = ps.Service.Description,
+                            CategoryId = ps.Service.CategoryId,
+                            ServiceName = ps.Service.Title 
+                        }).ToList();
+
+                        // Map the professional to the DTO
                         var professionalDTO = new ProfessionalsGetDTO
                         {
                             Id = pro.Id,
@@ -47,6 +65,8 @@ namespace SerBeast_API.Controllers
                             Barangay = pro.Barangay,
                             Description = pro.Description,
                             Rating = pro.Rating,
+                            PhoneNumber = pro.PhoneNumber,
+                            ProfessionalServices = professionalServicesDTO
                         };
 
                         professionals.Add(professionalDTO);
@@ -68,6 +88,8 @@ namespace SerBeast_API.Controllers
         }
 
 
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProfessional(string id)
         {
@@ -81,9 +103,9 @@ namespace SerBeast_API.Controllers
 
             try
             {
-                var applicationUser = await _db.ApplicationUsers.FindAsync(id);
-
-                if (applicationUser is null)
+                // Retrieve the professional user by ID
+                var professional = await _db.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == id);
+                if (professional == null)
                 {
                     _response.IsSuccess = false;
                     _response.StatusCode = HttpStatusCode.NotFound;
@@ -91,7 +113,49 @@ namespace SerBeast_API.Controllers
                     return NotFound(_response);
                 }
 
-                _response.Result = applicationUser;
+                // Check if the user has the 'Professional' role
+                var roles = await _userManager.GetRolesAsync(professional);
+                if (!roles.Contains(UserRoles.Role_Professional))
+                {
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.ErrorMessages.Add("User is not a professional.");
+                    return NotFound(_response);
+                }
+
+                // Fetch the professional's services
+                var professionalServices = await _db.ProfessionalServices
+                                                     .Where(ps => ps.ProfessionalId == id)
+                                                     .Include(ps => ps.Service) // Include related service details
+                                                     .ThenInclude(s => s.Category) // Include related category details
+                                                     .ToListAsync();
+
+                // Map the professional's services to a DTO
+                var professionalServicesDTO = professionalServices.Select(ps => new ProfessionalServiceGetDTO
+                {
+                    ProfessionalServiceId = ps.ProfessionalServiceId,
+                    ServiceId = ps.ServiceId,
+                    Price = ps.Price,
+                    Description = ps.Service.Description,
+                    CategoryId = ps.Service.CategoryId,
+                    ServiceName = ps.Service.Title,
+                    CategoryName = ps.Service.Category.Name
+                }).ToList();
+
+                // Map the professional details to a DTO
+                var professionalDTO = new ProfessionalsGetDTO
+                {
+                    Id = professional.Id,
+                    FirstName = professional.FirstName,
+                    MiddleInitial = professional.MiddleInitial,
+                    LastName = professional.LastName,
+                    Barangay = professional.Barangay,
+                    Description = professional.Description,
+                    Rating = professional.Rating,
+                    ProfessionalServices = professionalServicesDTO
+                };
+
+                _response.Result = professionalDTO;
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -104,6 +168,8 @@ namespace SerBeast_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, _response);
             }
         }
+
+
 
 
         [HttpPut("{id}")]
@@ -141,6 +207,7 @@ namespace SerBeast_API.Controllers
                 professionalFromDb.PhoneNumber = updateProfessionalDTO.PhoneNumber;
                 professionalFromDb.Description = updateProfessionalDTO.Description;
                 professionalFromDb.PhoneNumber = updateProfessionalDTO.PhoneNumber;
+                professionalFromDb.Barangay = updateProfessionalDTO.Barangay;
 
                 _db.ApplicationUsers.Update(professionalFromDb);
                 await _db.SaveChangesAsync();
