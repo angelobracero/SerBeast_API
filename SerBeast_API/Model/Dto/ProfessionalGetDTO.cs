@@ -8,6 +8,8 @@ namespace SerBeast_API.Model.Dto
 
         public string? MiddleInitial { get; set; }
 
+        public string? Email { get; set; }
+
         public string LastName { get; set; }
 
         public string? HouseLotBlockNumber { get; set; }

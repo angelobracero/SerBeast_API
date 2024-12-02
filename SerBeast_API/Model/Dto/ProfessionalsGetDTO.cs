@@ -12,6 +12,8 @@ namespace SerBeast_API.Model.Dto
                 
         public string? MiddleInitial { get; set; }
 
+        public string Email { get; set; }
+
         [Required]
         public string LastName { get; set; }
 

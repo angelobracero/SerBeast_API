@@ -152,6 +152,8 @@ namespace SerBeast_API.Controllers
                     Barangay = professional.Barangay,
                     Description = professional.Description,
                     Rating = professional.Rating,
+                    Email = professional.Email,
+                    PhoneNumber = professional.PhoneNumber,
                     ProfessionalServices = professionalServicesDTO
                 };
 
@@ -169,10 +171,62 @@ namespace SerBeast_API.Controllers
             }
         }
 
+        [HttpGet("professionalInfo/{id}")]
+        public async Task<IActionResult> GetProfessionalInfo(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("Professional ID is required.");
+                return BadRequest(_response);
+            }
+
+            try
+            {
+                // Retrieve the professional user by ID
+                var professional = await _db.ApplicationUsers
+                    .Where(u => u.Id == id)
+                    .Select(u => new ProfessionalInfoDTO
+                    {
+                        Id = u.Id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Email = u.Email,
+                        PhoneNumber = u.PhoneNumber,
+                        HouseLotBlockNumber = u.HouseLotBlockNumber,
+                        Street = u.Street,
+                        Barangay = u.Barangay,
+                        Birthday = u.Birthday,
+                        Description = u.Description,
+                        ProfileImageUrl = u.ProfileImageUrl
+                    })
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+
+                if (professional == null)
+                {
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.ErrorMessages.Add("Professional not found.");
+                    return NotFound(_response);
+                }
+                _response.Result = professional;
+                _response.StatusCode = HttpStatusCode.OK;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorMessages.Add("An error occurred while retrieving the professional.");
+                _response.ErrorMessages.Add(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, _response);
+            }
+        }
 
 
-
-        [HttpPut("{id}")]
+            [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProfessional(string id, [FromBody] ProfessionalUpdateDTO updateProfessionalDTO)
         {
             if (string.IsNullOrEmpty(id))

@@ -179,6 +179,73 @@ namespace SerBeast_API.Controllers
 
 
 
+        [HttpGet("Professional/{proId}/dashboard")]
+        public async Task<IActionResult> GetDataForDashboard(string proId)
+        {
+            try
+            {
+                // Fetch all bookings for the professional with necessary navigation properties
+                var bookings = await _db.Bookings
+                    .Where(b => b.ProfessionalService.ProfessionalId == proId)
+                    .AsNoTracking()
+                    .Include(b => b.ProfessionalService)
+                        .ThenInclude(ps => ps.Professional)
+                    .Include(b => b.ProfessionalService.Service)
+                    .OrderBy(b => b.BookingDate) // Sort by BookingDate descending
+                    .ToListAsync();
+
+                // Count services offered by the professional
+                var serviceOffered = await _db.ProfessionalServices
+                    .Where(ps => ps.ProfessionalId == proId)
+                    .AsNoTracking()
+                    .CountAsync();
+
+                // Compute metrics
+                var confirmedBookings = bookings.Count(b => b.Status == BookingStatus.Confirmed);
+                var completedServices = bookings.Count(b => b.Status == BookingStatus.Completed);
+                var totalEarnings = bookings
+                    .Where(b => b.Status == BookingStatus.Completed)
+                    .Sum(b => b.ProfessionalService.Price);
+
+                // Project upcoming bookings
+                var upcomingBookings = bookings.Select(b => new
+                {
+                    BookingId = b.Id,
+                    Status = b.Status.ToString(),
+                    Service = b.ProfessionalService?.Service?.Title ?? "No Service",
+                    Professional = $"{b.ProfessionalService?.Professional?.FirstName ?? "Unknown"} " +
+                                   $"{b.ProfessionalService?.Professional?.LastName ?? "Name"}",
+                    Date = b.BookingDate.ToString("MMM dd yyyy"),
+                    Time = b.BookingDate.ToString("hh:mm tt")
+                }).ToList();
+
+                // Construct the response
+                _response.Result = new
+                {
+                    ServiceOffered = serviceOffered,
+                    ConfirmedBookings = confirmedBookings,
+                    CompletedServices = completedServices,
+                    TotalEarnings = totalEarnings,
+                    UpcomingBookings = upcomingBookings
+                };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+                _response.ErrorMessages.Add($"Error occurred: {ex.Message}");
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                return StatusCode(500, _response);
+            }
+        }
+
+
+
+
 
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateBookingStatus(string id, [FromBody] string status)
@@ -238,6 +305,34 @@ namespace SerBeast_API.Controllers
                 BookingId = booking.Id,
                 UpdatedStatus = booking.Status.ToString(),
                 Message = "Booking status updated to 'Confirmed'."
+            };
+
+            return Ok(_response);
+        }
+
+        [HttpPut("{id}/status/complete")]
+        public async Task<IActionResult> UpdateBookingStatusToComplete(string id)
+        {
+            var booking = await _db.Bookings.FindAsync(id);
+            if (booking == null)
+            {
+                return NotFound($"Booking with ID {id} not found.");
+            }
+
+            if (booking.Status == BookingStatus.Completed)
+            {
+                return BadRequest("The booking is already in 'Confirmed' status.");
+            }
+
+            booking.Status = BookingStatus.Completed;
+
+            await _db.SaveChangesAsync();
+
+            _response.Result = new
+            {
+                BookingId = booking.Id,
+                UpdatedStatus = booking.Status.ToString(),
+                Message = "Booking status updated to 'Completed'."
             };
 
             return Ok(_response);

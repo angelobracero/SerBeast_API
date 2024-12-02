@@ -21,18 +21,23 @@ namespace SerBeast_API.Controllers
         {
             var faker = new Faker("en");
 
+            var firstName = faker.Name.FirstName();
+            var lastName = faker.Name.LastName();
+            var randomNumbers = faker.Random.Number(10, 99);
+
             return new RegisterRequestDTO
             {
-                FirstName = faker.Name.FirstName(),
+                FirstName = firstName,
                 MiddleInitial = faker.Random.String2(1, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-                LastName = faker.Name.LastName(),
-                Email = faker.Internet.Email(),
+                LastName = lastName,
+                Email = $"{firstName.ToLower()}.{lastName.ToLower()}{randomNumbers}@gmail.com", 
                 Password = "customer",
                 PhoneNumber = "09" + faker.Random.Number(100000000, 999999999),
                 HouseLotBlockNumber = faker.Address.BuildingNumber(),
                 Street = faker.Address.StreetName(),
-                Barangay = faker.PickRandom(BarangayList) 
+                Barangay = faker.PickRandom(BarangayList)
             };
         }
+
     }
 }
