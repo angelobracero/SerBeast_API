@@ -45,7 +45,7 @@ The front-end for **SerBeast** communicates with the API provided by this reposi
 
 ### Prerequisites
 - Visual Studio or Visual Studio Code
-- .NET SDK (>= 6.x)
+- .NET SDK (>= 8.x)
 - SQL Server (Local or Remote)
 
 ### Steps
